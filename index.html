@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechComp Store - Jual Beli Komponen Komputer</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome untuk Ikon -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --secondary-color: #6c757d;
+            --bg-light: #f8f9fa;
+            --text-dark: #212529;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+
+        /* Navbar Styling */
+        .navbar {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        /* Card Styling */
+        .product-card {
+            border: none;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            background: white;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .card-img-wrapper {
+            height: 200px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .card-img-top {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .product-card:hover .card-img-top {
+            transform: scale(1.05);
+        }
+
+        .price-tag {
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+
+        /* Auth Container */
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0d6efd 0%, #0099ff 100%);
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+
+        /* View Management */
+        .view-section {
+            display: none; /* Hidden by default */
+            animation: fadeIn 0.4s ease-in-out;
+            padding-top: 20px;
+            padding-bottom: 60px;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Toast Notification */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1055;
+        }
+
+        /* Floating Action Button for Mobile */
+        .fab-add {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 15px rgba(13, 110, 253, 0.4);
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        .fab-add:hover {
+            transform: scale(1.1) rotate(90deg);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--secondary-color);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- === TOAST NOTIFICATION SYSTEM === -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- === AUTH VIEW (Login/Register) === -->
+    <section id="authView" class="auth-container">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-6 col-lg-4">
+                    <div class="card auth-card p-4">
+                        <div class="text-center mb-4">
+                            <i class="fas fa-microchip fa-3x text-primary mb-2"></i>
+                            <h3 class="fw-bold">TechComp</h3>
+                            <p class="text-muted small">Platform Jual Beli Hardware Terpercaya</p>
+                        </div>
+
+                        <!-- Login Form -->
+                        <form id="loginForm">
+                            <h5 class="mb-3">Masuk</h5>
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                    <input type="email" class="form-control" id="loginEmail" placeholder="contoh@email.com" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Password</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                    <input type="password" class="form-control" id="loginPass" placeholder="********" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 py-2 mb-3">Masuk Sekarang</button>
+                            <div class="text-center">
+                                <small>Belum punya akun? <a href="#" onclick="switchAuth('register')">Daftar disini</a></small>
+                            </div>
+                        </form>
+
+                        <!-- Register Form (Hidden Initially) -->
+                        <form id="registerForm" style="display: none;">
+                            <h5 class="mb-3">Daftar Akun Baru</h5>
+                            <div class="mb-2">
+                                <label class="form-label">Nama Lengkap</label>
+                                <input type="text" class="form-control" id="regName" required>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" id="regEmail" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Password</label>
+                                <input type="password" class="form-control" id="regPass" required>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100 py-2 mb-3">Daftar Akun</button>
+                            <div class="text-center">
+                                <small>Sudah punya akun? <a href="#" onclick="switchAuth('login')">Masuk disini</a></small>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- === MAIN APP VIEW === -->
+    <div id="appView" style="display: none;">
+        
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+            <div class="container">
+                <a class="navbar-brand text-primary" href="#" onclick="renderProducts()">
+                    <i class="fas fa-microchip me-2"></i>TechComp
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#" onclick="renderProducts()">Beranda</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showMyProducts()">Produk Saya</a>
+                        </li>
+                    </ul>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="dropdown">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center gap-2 text-dark" href="#" role="button" data-bs-toggle="dropdown">
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                                    <span id="userInitial">U</span>
+                                </div>
+                                <span id="userNameDisplay" class="fw-bold d-none d-md-block">User</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                <li><h6 class="dropdown-header">Akun Saya</h6></li>
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Profil</a></li>
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i> Pengaturan</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="#" onclick="logout()"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Dynamic Content Container -->
+        <main class="container view-section active">
+            <!-- Search & Filter -->
+            <div class="row mb-4 align-items-center">
+                <div class="col-md-6">
+                    <h2 class="fw-bold mb-0" id="pageTitle">Komponen Terbaru</h2>
+                    <p class="text-muted">Temukan hardware terbaik untuk build PC impianmu.</p>
+                </div>
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                        <input type="text" class="form-control border-start-0" id="searchInput" placeholder="Cari prosesor, vga, motherboard..." onkeyup="filterProducts()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Grid -->
+            <div class="row g-4" id="productGrid">
+                <!-- Products will be injected here via JS -->
+            </div>
+            
+            <!-- Empty State (Hidden by default) -->
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <i class="fas fa-box-open fa-4x mb-3 text-muted"></i>
+                <h4>Belum ada produk ditemukan</h4>
+                <p>Coba kata kunci lain atau tambah produk baru.</p>
+            </div>
+        </main>
+
+        <!-- Floating Add Button (Visible when viewing "My Products") -->
+        <div id="fabAdd" class="fab-add" onclick="openProductModal()">
+            <i class="fas fa-plus"></i>
+        </div>
+    </div>
+
+    <!-- === MODAL ADD/EDIT PRODUCT === -->
+    <div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title fw-bold" id="modalTitle">Tambah Produk</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="productForm">
+                        <input type="hidden" id="prodId">
+                        <div class="mb-3">
+                            <label class="form-label">Nama Komponen</label>
+                            <input type="text" class="form-control" id="prodName" placeholder="Contoh: RTX 4090" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Kategori</label>
+                            <select class="form-select" id="prodCategory" required>
+                                <option value="GPU">VGA / GPU</option>
+                                <option value="CPU">Prosesor / CPU</option>
+                                <option value="Motherboard">Motherboard</option>
+                                <option value="RAM">Memory / RAM</option>
+                                <option value="Storage">SSD / HDD</option>
+                                <option value="PSU">Power Supply</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Harga (Rp)</label>
+                            <input type="number" class="form-control" id="prodPrice" placeholder="Contoh: 15000000" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Deskripsi</label>
+                            <textarea class="form-control" id="prodDesc" rows="3" required></textarea>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Simpan Produk</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- === MODAL PRODUCT DETAIL === -->
+    <div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-body p-0">
+                    <div class="row g-0">
+                        <div class="col-md-6">
+                            <img src="" id="detailImage" class="img-fluid h-100 object-fit-cover rounded-start" style="min-height: 300px;" alt="...">
+                        </div>
+                        <div class="col-md-6 p-4 d-flex flex-col justify-content-center">
+                            <span class="badge bg-primary align-self-start mb-2" id="detailCategory">Category</span>
+                            <h3 class="fw-bold mb-2" id="detailName">Product Name</h3>
+                            <h4 class="text-primary mb-3" id="detailPrice">Rp 0</h4>
+                            <p class="text-muted mb-4" id="detailDesc">Description goes here.</p>
+                            
+                            <div class="d-flex align-items-center justify-content-between mt-auto">
+                                <small class="text-muted"><i class="fas fa-user-circle me-1"></i> <span id="detailSeller">Seller</span></small>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-outline-success" onclick="simulateBuy()">
+                                        <i class="fas fa-shopping-cart me-1"></i> Beli
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tutup</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        /**
+         * ==========================================
+         *  STATE MANAGEMENT (Simulasi Database)
+         * ==========================================
+         */
+        
+        // Data awal jika LocalStorage kosong
+        const initialProducts = [
+            { id: 1, name: "NVIDIA GeForce RTX 4090", category: "GPU", price: 28000000, desc: "GPU tercepat di dunia untuk gaming dan productivity.", seller: "Admin", imageId: "48" },
+            { id: 2, name: "Intel Core i9-13900K", category: "CPU", price: 8500000, desc: "Prosesor generasi ke-13 dengan 24 core.", seller: "Admin", imageId: "11" },
+            { id: 3, name: "ASUS ROG Strix Z790-E", category: "Motherboard", price: 7200000, desc: "Motherboard ATX premium dengan WiFi 6E.", seller: "Admin", imageId: "20" },
+            { id: 4, name: "Corsair Vengeance DDR5 32GB", category: "RAM", price: 2500000, desc: "Memory DDR5 6000MHz CL36 kit 2x16GB.", seller: "Admin", imageId: "3" },
+            { id: 5, name: "Samsung 990 Pro 2TB SSD", category: "Storage", price: 3200000, desc: "NVMe SSD super cepat dengan read speed 7450MB/s.", seller: "Admin", imageId: "40" }
+        ];
+
+        const initialUsers = [
+            { id: 1, name: "Admin User", email: "admin@techcomp.com", pass: "admin123" }
+        ];
+
+        // Load data atau gunakan data awal
+        let products = JSON.parse(localStorage.getItem('techcomp_products')) || initialProducts;
+        let users = JSON.parse(localStorage.getItem('techcomp_users')) || initialUsers;
+        let currentUser = JSON.parse(localStorage.getItem('techcomp_current_user')) || null;
+
+        // Modal instances
+        let productModal;
+        let detailModal;
+
+        /**
+         * ==========================================
+         *  AUTH SYSTEM (Login/Register/Logout)
+         * ==========================================
+         */
+
+        function initApp() {
+            // Cek status login
+            if (currentUser) {
+                showApp();
+            } else {
+                showAuth();
+            }
+            
+            // Inisialisasi Modal Bootstrap
+            productModal = new bootstrap.Modal(document.getElementById('productModal'));
+            detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
+        }
+
+        function switchAuth(type) {
+            const loginForm = document.getElementById('loginForm');
+            const regForm = document.getElementById('registerForm');
+            
+            if (type === 'register') {
+                loginForm.style.display = 'none';
+                regForm.style.display = 'block';
+            } else {
+                loginForm.style.display = 'block';
+                regForm.style.display = 'none';
+            }
+        }
+
+        // Handle Register
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const pass = document.getElementById('regPass').value;
+
+            // Cek email duplikat
+            if (users.find(u => u.email === email)) {
+                showToast("Email sudah terdaftar!", "danger");
+                return;
+            }
+
+            const newUser = {
+                id: Date.now(),
+                name: name,
+                email: email,
+                pass: pass
+            };
+
+            users.push(newUser);
+            localStorage.setItem('techcomp_users', JSON.stringify(users));
+            
+            showToast("Registrasi berhasil! Silakan login.", "success");
+            switchAuth('login');
+            this.reset();
+        });
+
+        // Handle Login
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const pass = document.getElementById('loginPass').value;
+
+            const user = users.find(u => u.email === email && u.pass === pass);
+
+            if (user) {
+                currentUser = user;
+                localStorage.setItem('techcomp_current_user', JSON.stringify(currentUser));
+                showToast(`Selamat datang, ${user.name}!`, "success");
+                showApp();
+                this.reset();
+            } else {
+                showToast("Email atau password salah.", "danger");
+            }
+        });
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('techcomp_current_user');
+            showToast("Anda berhasil logout.", "info");
+            showAuth();
+        }
+
+        function showAuth() {
+            document.getElementById('authView').style.display = 'flex';
+            document.getElementById('appView').style.display = 'none';
+            document.body.style.backgroundColor = ''; // Reset gradient
+        }
+
+        function showApp() {
+            document.getElementById('authView').style.display = 'none';
+            document.getElementById('appView').style.display = 'block';
+            document.body.style.backgroundColor = '#f8f9fa';
+            
+            // Update User Info di Navbar
+            document.getElementById('userNameDisplay').innerText = currentUser.name;
+            document.getElementById('userInitial').innerText = currentUser.name.charAt(0).toUpperCase();
+
+            renderProducts(); // Default view
+        }
+
+        /**
+         * ==========================================
+         *  PRODUCT CRUD SYSTEM
+         * ==========================================
+         */
+
+        let currentView = 'all'; // 'all' atau 'my'
+
+        function renderProducts(list = null) {
+            currentView = 'all';
+            document.getElementById('pageTitle').innerText = "Semua Komponen";
+            document.getElementById('fabAdd').style.display = 'none'; // Sembunyikan tombol tambah di view semua
+
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = '';
+
+            const data = list || products;
+
+            if (data.length === 0) {
+                document.getElementById('emptyState').style.display = 'block';
+            } else {
+                document.getElementById('emptyState').style.display = 'none';
+                data.forEach(p => {
+                    grid.innerHTML += createProductCard(p, false);
+                });
+            }
+        }
+
+        function showMyProducts() {
+            currentView = 'my';
+            document.getElementById('pageTitle').innerText = "Produk Saya";
+            document.getElementById('fabAdd').style.display = 'flex'; // Tampilkan tombol tambah
+
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = '';
+
+            // Filter produk milik user yang sedang login
+            const myProducts = products.filter(p => p.seller === currentUser.name);
+
+            if (myProducts.length === 0) {
+                document.getElementById('emptyState').style.display = 'block';
+            } else {
+                document.getElementById('emptyState').style.display = 'none';
+                myProducts.forEach(p => {
+                    grid.innerHTML += createProductCard(p, true); // true = isOwner
+                });
+            }
+        }
+
+        function createProductCard(product, isOwner) {
+            // Generate gambar random berdasarkan ID agar konsisten
+            const imgUrl = `https://picsum.photos/seed/${product.imageId}/400/300`;
+            const formattedPrice = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(product.price);
+
+            let actionButtons = '';
+            
+            if (isOwner) {
+                actionButtons = `
+                    <div class="mt-3 d-flex gap-2">
+                        <button class="btn btn-sm btn-warning flex-fill" onclick="editProduct(${product.id})"><i class="fas fa-edit"></i> Edit</button>
+                        <button class="btn btn-sm btn-danger flex-fill" onclick="deleteProduct(${product.id})"><i class="fas fa-trash"></i> Hapus</button>
+                    </div>
+                `;
+            } else {
+                actionButtons = `
+                    <button class="btn btn-primary w-100 mt-3" onclick="viewDetail(${product.id})">Lihat Detail</button>
+                `;
+            }
+
+            return `
+                <div class="col-md-6 col-lg-4 col-xl-3 fade-in">
+                    <div class="product-card card h-100 shadow-sm">
+                        <div class="card-img-wrapper">
+                            <img src="${imgUrl}" class="card-img-top" alt="${product.name}">
+                            <span class="position-absolute top-0 end-0 m-2 badge bg-dark opacity-75">${product.category}</span>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title fw-bold text-truncate">${product.name}</h5>
+                            <p class="text-muted small flex-grow-1 text-truncate">${product.desc}</p>
+                            <div class="price-tag mb-2">${formattedPrice}</div>
+                            ${actionButtons}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Search Filter
+        function filterProducts() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = products.filter(p => 
+                p.name.toLowerCase().includes(query) || 
+                p.category.toLowerCase().includes(query)
+            );
+            renderProducts(filtered);
+        }
+
+        // Open Modal (Create or Edit)
+        function openProductModal(id = null) {
+            const form = document.getElementById('productForm');
+            const title = document.getElementById('modalTitle');
+
+            form.reset();
+
+            if (id) {
+                // Edit Mode
+                const p = products.find(x => x.id === id);
+                document.getElementById('prodId').value = p.id;
+                document.getElementById('prodName').value = p.name;
+                document.getElementById('prodCategory').value = p.category;
+                document.getElementById('prodPrice').value = p.price;
+                document.getElementById('prodDesc').value = p.desc;
+                title.innerText = "Edit Produk";
+            } else {
+                // Create Mode
+                document.getElementById('prodId').value = '';
+                title.innerText = "Tambah Produk Baru";
+            }
+
+            productModal.show();
+        }
+
+        // Handle Submit Form (Create/Update)
+        document.getElementById('productForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('prodId').value;
+            const name = document.getElementById('prodName').value;
+            const category = document.getElementById('prodCategory').value;
+            const price = parseInt(document.getElementById('prodPrice').value);
+            const desc = document.getElementById('prodDesc').value;
+
+            if (id) {
+                // UPDATE
+                const index = products.findIndex(p => p.id == id);
+                if (index !== -1) {
+                    products[index].name = name;
+                    products[index].category = category;
+                    products[index].price = price;
+                    products[index].desc = desc;
+                    showToast("Produk berhasil diperbarui!", "warning");
+                }
+            } else {
+                // CREATE
+                const newProduct = {
+                    id: Date.now(),
+                    name: name,
+                    category: category,
+                    price: price,
+                    desc: desc,
+                    seller: currentUser.name,
+                    imageId: Math.floor(Math.random() * 1000).toString()
+                };
+                products.push(newProduct);
+                showToast("Produk berhasil ditambahkan!", "success");
+            }
+
+            saveData();
+            productModal.hide();
+            
+            // Refresh view
+            if (currentView === 'my') {
+                showMyProducts();
+            } else {
+                renderProducts();
+            }
+        });
+
+        // Edit Trigger
+        function editProduct(id) {
+            openProductModal(id);
+        }
+
+        // Delete Trigger
+        function deleteProduct(id) {
+            if (confirm("Yakin ingin menghapus produk ini?")) {
+                products = products.filter(p => p.id !== id);
+                saveData();
+                showMyProducts();
+                showToast("Produk dihapus.", "danger");
+            }
+        }
+
+        // View Detail
+        function viewDetail(id) {
+            const p = products.find(x => x.id === id);
+            
+            document.getElementById('detailImage').src = `https://picsum.photos/seed/${p.imageId}/600/400`;
+            document.getElementById('detailCategory').innerText = p.category;
+            document.getElementById('detailName').innerText = p.name;
+            document.getElementById('detailPrice').innerText = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(p.price);
+            document.getElementById('detailDesc').innerText = p.desc;
+            document.getElementById('detailSeller').innerText = p.seller;
+
+            detailModal.show();
+        }
+
+        // Simulasi Beli
+        function simulateBuy() {
+            detailModal.hide();
+            showToast("Fitur pembayaran sedang diproses oleh admin!", "info");
+        }
+
+        // Save to LocalStorage
+        function saveData() {
+            localStorage.setItem('techcomp_products', JSON.stringify(products));
+        }
+
+        /**
+         * ==========================================
+         *  UTILITIES (Toast, etc)
+         * ==========================================
+         */
+
+        function showToast(message, type = 'primary') {
+            const container = document.getElementById('toastContainer');
+            const id = 'toast_' + Date.now();
+            
+            const html = `
+                <div id="${id}" class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                           ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', html);
+            const toastEl = document.getElementById(id);
+            const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+            toast.show();
+            
+            toastEl.addEventListener('hidden.bs.toast', () => {
+                toastEl.remove();
+            });
+        }
+
+        // Initialize App on Load
+        document.addEventListener('DOMContentLoaded', initApp);
+
+    </script>
+</body>
+</html>
